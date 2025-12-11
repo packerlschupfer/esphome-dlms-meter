@@ -1,0 +1,104 @@
+# ESPHome DLMS Smart Meter Configuration
+# Using new external_components format (ESPHome 2023.12+)
+#
+# This replaces the deprecated custom_component approach.
+# Compatible with Kaifa MA309M and similar DLMS meters.
+
+esphome:
+  name: smartmeter01
+  friendly_name: "SmartMeter"
+  comment: "SmartMeter Reader via M-Bus"
+
+esp32:
+  board: esp32-poe-iso
+  framework:
+    type: arduino
+
+# Include the DLMS meter external component
+external_components:
+  - source: github://packerlschupfer/esphome-dlms-meter
+    components: [dlms_meter]
+
+# Enable logging
+logger:
+  level: DEBUG
+  tx_buffer_size: 2048
+  logs:
+    component: ERROR
+
+# Enable Home Assistant API
+api:
+  reboot_timeout: 24h
+  encryption:
+    key: !secret api_encryption_key
+
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+ethernet:
+  type: LAN8720
+  mdc_pin: GPIO23
+  mdio_pin: GPIO18
+  clk_mode: GPIO17_OUT
+  phy_addr: 0
+  power_pin: GPIO12
+
+# UART for M-Bus communication
+uart:
+  tx_pin: GPIO4
+  rx_pin: GPIO36
+  baud_rate: 2400
+  rx_buffer_size: 2048
+  id: mbus
+
+# DLMS Meter Component
+# All sensors are optional - include only what you need
+dlms_meter:
+  uart_id: mbus
+  # Your 16-byte decryption key from your energy provider
+  key: [0x3E, 0xC8, 0xFB, 0x32, 0x83, 0x69, 0x07, 0xBA, 0x04, 0xBA, 0x53, 0x8B, 0x63, 0x32, 0x91, 0xFF]
+
+  # Voltage sensors (optional)
+  voltage_l1:
+    name: "Voltage L1"
+  voltage_l2:
+    name: "Voltage L2"
+  voltage_l3:
+    name: "Voltage L3"
+
+  # Current sensors (optional)
+  current_l1:
+    name: "Current L1"
+  current_l2:
+    name: "Current L2"
+  current_l3:
+    name: "Current L3"
+
+  # Power sensors (optional)
+  active_power_plus:
+    name: "Active Power Import"
+  active_power_minus:
+    name: "Active Power Export"
+  power_factor:
+    name: "Power Factor"
+
+  # Energy sensors (optional)
+  active_energy_plus:
+    name: "Total Energy Import"
+  active_energy_minus:
+    name: "Total Energy Export"
+  reactive_energy_plus:
+    name: "Reactive Energy Import"
+  reactive_energy_minus:
+    name: "Reactive Energy Export"
+
+  # Text sensors (optional)
+  timestamp:
+    name: "Meter Timestamp"
+  meter_number:
+    name: "Meter Number"
+
+time:
+  - platform: homeassistant
+    id: homeassistant_time
