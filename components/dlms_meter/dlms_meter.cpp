@@ -312,8 +312,9 @@ uint32_t DlmsMeter::swap_uint32(uint32_t val) {
 }
 
 void DlmsMeter::log_packet(uint8_t *array, size_t length) {
-  if (!ESP_LOG_LEVEL_IS(ESP_LOG_VERBOSE, TAG))
-    return;
+#if ESPHOME_LOG_LEVEL < ESPHOME_LOG_LEVEL_VERBOSE
+  return;
+#endif
 
   char buffer[length * 3];
   for (size_t i = 0; i < length; i++) {
