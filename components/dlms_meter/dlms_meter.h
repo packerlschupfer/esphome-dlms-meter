@@ -4,7 +4,7 @@
 #include "esphome/components/uart/uart.h"
 #include "esphome/components/sensor/sensor.h"
 #include "esphome/components/text_sensor/text_sensor.h"
-#include "mbedtls/gcm.h"
+#include "mbedtls/aes.h"
 
 namespace esphome {
 namespace dlms_meter {
@@ -66,7 +66,7 @@ class DlmsMeter : public Component, public uart::UARTDevice {
   std::string mqtt_topic_;
 
   // AES context
-  mbedtls_gcm_context aes_;
+  mbedtls_aes_context aes_;
 
   // Voltage sensors
   sensor::Sensor *voltage_l1_{nullptr};

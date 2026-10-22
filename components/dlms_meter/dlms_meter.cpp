@@ -8,7 +8,7 @@ namespace dlms_meter {
 
 void DlmsMeter::setup() {
   ESP_LOGI(TAG, "DLMS smart meter component v%s started", VERSION);
-  mbedtls_gcm_init(&aes_);
+  mbedtls_aes_init(&aes_);
 }
 
 void DlmsMeter::dump_config() {
@@ -32,7 +32,6 @@ void DlmsMeter::loop() {
     receive_buffer_index_++;
 
     last_read_ = current_time;
-    delay(10);  // Fix for ESPHome 2022.12+
   }
 
   if (receive_buffer_index_ > 0 && current_time - last_read_ > read_timeout_) {
@@ -80,11 +79,29 @@ void DlmsMeter::loop() {
     // Decrypt
     uint8_t plaintext[payload_length];
 
-    mbedtls_gcm_setkey(&aes_, MBEDTLS_CIPHER_ID_AES, key_, key_length_ * 8);
-    mbedtls_gcm_auth_decrypt(&aes_, payload_length, iv, sizeof(iv), NULL, 0, NULL, 0, ciphertext, plaintext);
+    // DLMS frames carry no GCM auth tag, so decrypt as plain AES-CTR (the GCM
+    // keystream starts at counter IV || 00000002). mbedtls >= 3 rejects a
+    // zero-length tag in mbedtls_gcm_auth_decrypt() without decrypting.
+    uint8_t nonce_counter[16];
+    uint8_t stream_block[16];
+    size_t nc_off = 0;
+    memcpy(nonce_counter, iv, sizeof(iv));
+    nonce_counter[12] = 0x00;
+    nonce_counter[13] = 0x00;
+    nonce_counter[14] = 0x00;
+    nonce_counter[15] = 0x02;
+
+    int ret = mbedtls_aes_setkey_enc(&aes_, key_, key_length_ * 8);
+    if (ret == 0)
+      ret = mbedtls_aes_crypt_ctr(&aes_, payload_length, &nc_off, nonce_counter, stream_block, ciphertext, plaintext);
+    if (ret != 0) {
+      ESP_LOGE(TAG, "Decryption failed (mbedtls error -0x%04X)", (unsigned) -ret);
+      abort_read();
+      return;
+    }
 
     if (plaintext[0] != 0x0F || plaintext[5] != 0x0C) {
-      ESP_LOGE(TAG, "Packet was decrypted but data is invalid");
+      ESP_LOGE(TAG, "Packet was decrypted but data is invalid (wrong key?)");
       abort_read();
       return;
     }
