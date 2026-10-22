@@ -362,19 +362,8 @@ uint32_t DlmsMeter::swap_uint32(uint32_t val) {
 
 void DlmsMeter::log_packet(uint8_t *array, size_t length) {
 #if ESPHOME_LOG_LEVEL >= ESPHOME_LOG_LEVEL_VERBOSE
-  if (length == 0)
-    return;
-
-  char buffer[length * 3];
-  for (size_t i = 0; i < length; i++) {
-    uint8_t nib1 = (array[i] >> 4) & 0x0F;
-    uint8_t nib2 = (array[i] >> 0) & 0x0F;
-    buffer[i * 3] = nib1 < 0xA ? '0' + nib1 : 'A' + nib1 - 0xA;
-    buffer[i * 3 + 1] = nib2 < 0xA ? '0' + nib2 : 'A' + nib2 - 0xA;
-    buffer[i * 3 + 2] = ' ';
-  }
-  buffer[(length * 3) - 1] = '\0';
-  ESP_LOGV(TAG, "%s", buffer);
+  char buffer[format_hex_pretty_size(RECEIVE_BUFFER_SIZE)];
+  ESP_LOGV(TAG, "%s", format_hex_pretty_to(buffer, sizeof(buffer), array, length, ' '));
 #endif
 }
 

@@ -75,7 +75,8 @@ ENERGY_SCHEMA = sensor.sensor_schema(
     state_class=STATE_CLASS_TOTAL_INCREASING,
 )
 
-CONFIG_SCHEMA = (
+CONFIG_SCHEMA = cv.All(
+    cv.require_esphome_version(2026, 1, 0),  # format_hex_pretty_to()
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(DlmsMeter),
@@ -101,7 +102,7 @@ CONFIG_SCHEMA = (
         }
     )
     .extend(cv.COMPONENT_SCHEMA)
-    .extend(uart.UART_DEVICE_SCHEMA)
+    .extend(uart.UART_DEVICE_SCHEMA),
 )
 
 
