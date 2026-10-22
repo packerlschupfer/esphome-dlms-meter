@@ -56,7 +56,7 @@ class DlmsMeter : public Component, public uart::UARTDevice {
   uint8_t receive_buffer_[RECEIVE_BUFFER_SIZE];
   int receive_buffer_index_ = 0;
   uint32_t last_read_ = 0;
-  int read_timeout_ = 1000;
+  uint32_t read_timeout_ = 1000;
 
   // Decryption key
   uint8_t key_[16];

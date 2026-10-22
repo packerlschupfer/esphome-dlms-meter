@@ -1,11 +1,9 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import uart, sensor, text_sensor, mqtt
+from esphome.components import uart, sensor, text_sensor
 from esphome.const import (
     CONF_ID,
     CONF_KEY,
-    CONF_VOLTAGE,
-    CONF_CURRENT,
     UNIT_VOLT,
     UNIT_AMPERE,
     UNIT_WATT,
@@ -42,11 +40,6 @@ CONF_MQTT_TOPIC = "mqtt_topic"
 
 dlms_meter_ns = cg.esphome_ns.namespace("dlms_meter")
 DlmsMeter = dlms_meter_ns.class_("DlmsMeter", cg.Component, uart.UARTDevice)
-
-SENSOR_SCHEMA = sensor.sensor_schema(
-    accuracy_decimals=1,
-    state_class=STATE_CLASS_MEASUREMENT,
-)
 
 VOLTAGE_SCHEMA = sensor.sensor_schema(
     unit_of_measurement=UNIT_VOLT,
